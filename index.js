@@ -1,6 +1,6 @@
 const TelegramBot = require("node-telegram-bot-api");
 const { sendLikes } = require("./api/likes");
-const token = "YOUR_BOT_TOKEN";
+const token = "8077337815:AAFQ38sr8TPQFrNRpGPl4HMnXT4mwMP1cfM";
 const bot = new TelegramBot(token, { polling: true });
 
 const requiredChannel = "@paidtechzone";
