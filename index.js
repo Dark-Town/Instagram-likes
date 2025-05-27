@@ -1,31 +1,39 @@
 const TelegramBot = require("node-telegram-bot-api");
 const { sendLikes } = require("./api/likes");
+
 const token = "8077337815:AAFQ38sr8TPQFrNRpGPl4HMnXT4mwMP1cfM";
 const bot = new TelegramBot(token, { polling: true });
 
 const requiredChannel = "@paidtechzone";
 const logChannel = "@deployed_bots";
 
-// Helper: Check if user is in required channel
+// Check if user joined
 async function isUserInChannel(userId) {
   try {
     const status = await bot.getChatMember(requiredChannel, userId);
-    return ["member", "creator", "administrator"].includes(status.status);
-  } catch (e) {
+    return ["creator", "administrator", "member"].includes(status.status);
+  } catch {
     return false;
   }
 }
 
-// Start command with buttons
+// /start command
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
+  const userId = msg.from.id;
 
-  const joined = await isUserInChannel(chatId);
+  const joined = await isUserInChannel(userId);
   if (!joined) {
-    return bot.sendMessage(chatId, "Please join our channel first: " + requiredChannel);
+    return bot.sendMessage(chatId, `Please join our channel first: ${requiredChannel}`);
   }
 
-  bot.sendMessage(chatId, "Welcome! Choose an option below:\n- TCRONEB HACKX", {
+  // Send welcome video
+  await bot.sendVideo(chatId, "https://example.com/welcome.mp4", {
+    caption: "Welcome to Insta Likes Bot!\n- TCRONEB HACKX"
+  });
+
+  // Send buttons
+  await bot.sendMessage(chatId, "Choose an option below:\n- TCRONEB HACKX", {
     reply_markup: {
       inline_keyboard: [
         [
@@ -48,37 +56,36 @@ bot.on("callback_query", async (query) => {
   const data = query.data;
 
   if (data === "instagram") {
-    bot.sendMessage(chatId, "Send me your Instagram post URL.\n- TCRONEB HACKX");
+    bot.sendMessage(chatId, "Please send your Instagram post link.\n- TCRONEB HACKX");
   } else {
-    bot.sendMessage(chatId, `${data.charAt(0).toUpperCase() + data.slice(1)} feature coming soon.\n- TCRONEB HACKX`);
+    bot.sendMessage(chatId, `${data} support coming soon.\n- TCRONEB HACKX`);
   }
 });
 
-// Handle Instagram URLs
+// Handle Instagram links
 bot.onText(/https:\/\/www\.instagram\.com\/p\/[A-Za-z0-9_-]+/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const instaUrl = match[0];
 
-  const joined = await isUserInChannel(chatId);
+  const joined = await isUserInChannel(userId);
   if (!joined) {
-    return bot.sendMessage(chatId, "You must join our channel first: " + requiredChannel);
+    return bot.sendMessage(chatId, `Please join our channel first: ${requiredChannel}`);
   }
 
-  bot.sendMessage(chatId, "Processing your request, please wait 60 seconds...\n- TCRONEB HACKX");
+  bot.sendMessage(chatId, "Please wait 60 seconds...\n- TCRONEB HACKX");
 
   setTimeout(async () => {
     const result = await sendLikes(instaUrl);
     bot.sendMessage(chatId, result.message + "\n- TCRONEB HACKX");
 
-    // Log to admin channel
-    bot.sendMessage(logChannel, `User: @${msg.from.username || msg.from.id} sent IG URL:\n${instaUrl}`);
+    bot.sendMessage(logChannel, `@${msg.from.username || userId} used the bot:\n${instaUrl}`);
   }, 60000);
 });
 
-// Fallback for invalid messages
+// Fallback for other messages
 bot.on("message", (msg) => {
-  if (!msg.text.includes("instagram.com") && !msg.text.startsWith("/start")) {
-    bot.sendMessage(msg.chat.id, "Please send a valid Instagram post link.\n- TCRONEB HACKX");
+  if (!msg.text.startsWith("/start") && !msg.text.includes("instagram.com")) {
+    bot.sendMessage(msg.chat.id, "Please send a valid Instagram post URL.\n- TCRONEB HACKX");
   }
 });
